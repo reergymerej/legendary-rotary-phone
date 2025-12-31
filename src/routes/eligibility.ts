@@ -128,3 +128,93 @@ eligibilityRouter.post('/check', async (req, res) => {
     return res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Record that an action happened
+eligibilityRouter.post('/record', async (req, res) => {
+  try {
+    const data = recordActionSchema.parse(req.body);
+
+    // MESSY: Direct timestamp parsing, no validation, mixed concerns
+    const timestamp = data.timestamp ? new Date(data.timestamp) : new Date();
+
+    // MESSY: User management mixed in with action recording
+    let user = await prisma.user.findUnique({
+      where: { id: data.userId }
+    });
+
+    if (!user) {
+      // MESSY: Auto-create user with minimal data, no validation
+      user = await prisma.user.create({
+        data: {
+          id: data.userId,
+          email: `${data.userId}@example.com`, // HACK: generate fake email
+          status: 'active'
+        }
+      });
+    }
+
+    // Record the action
+    const action = await prisma.actionHistory.create({
+      data: {
+        userId: data.userId,
+        actionType: data.action,
+        amount: data.amount,
+        timestamp: timestamp
+      }
+    });
+
+    return res.json({
+      recorded: true,
+      actionId: action.id,
+      timestamp: action.timestamp.toISOString(),
+      userId: user.id
+    });
+  } catch (error) {
+    // Handle validation errors specifically
+    if (error && typeof error === 'object' && 'issues' in error) {
+      return res.status(400).json({ error: 'Invalid request data', details: error.issues });
+    }
+    console.error('Error recording action:', error);
+    return res.status(500).json({ error: 'Failed to record action' });
+  }
+});
+
+// Get user's action history
+eligibilityRouter.get('/history/:userId', async (req, res) => {
+  const { userId } = req.params;
+  const { days = '7' } = req.query; // MESSY: no validation
+
+  try {
+    // MESSY: Direct date manipulation, no abstraction
+    const daysBack = parseInt(days as string) || 7;
+    const since = new Date();
+    since.setDate(since.getDate() - daysBack);
+
+    const actions = await prisma.actionHistory.findMany({
+      where: {
+        userId: userId,
+        timestamp: {
+          gte: since
+        }
+      },
+      orderBy: {
+        timestamp: 'desc'
+      }
+    });
+
+    // MESSY: Could group by day/action, but just returning raw data
+    return res.json({
+      userId,
+      actions: actions.map(action => ({
+        id: action.id,
+        action: action.actionType,
+        amount: action.amount,
+        timestamp: action.timestamp.toISOString()
+      })),
+      totalCount: actions.length
+    });
+  } catch (error) {
+    console.error('Error fetching history:', error);
+    return res.status(500).json({ error: 'Failed to fetch history' });
+  }
+});
