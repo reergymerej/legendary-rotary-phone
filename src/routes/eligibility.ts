@@ -27,15 +27,12 @@ eligibilityRouter.post('/check', async (req, res) => {
 
     // INTENTIONALLY MESSY - mixing business logic with DB calls, using real Date (hard to test)
     const now = new Date();
-    const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const endOfDay = new Date(startOfDay.getTime() + 24 * 60 * 60 * 1000);
 
     // Find relevant policies
     const policies = await prisma.policy.findMany({
       where: {
         actionType: data.action,
-        isActive: true,
-        timeWindow: 'daily'
+        isActive: true
       }
     });
 
@@ -49,29 +46,54 @@ eligibilityRouter.post('/check', async (req, res) => {
 
     // Check each policy (MESSY: should aggregate, not loop)
     for (const policy of policies) {
-      // Count today's actions for this user
-      const todaysActions = await prisma.actionHistory.findMany({
+      // MESSY: Inline time window calculation, repeated logic
+      let startTime: Date, endTime: Date;
+
+      if (policy.timeWindow === 'hourly') {
+        startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours());
+        endTime = new Date(startTime.getTime() + 60 * 60 * 1000);
+      } else if (policy.timeWindow === 'daily') {
+        startTime = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        endTime = new Date(startTime.getTime() + 24 * 60 * 60 * 1000);
+      } else if (policy.timeWindow === 'weekly') {
+        const dayOfWeek = now.getDay();
+        startTime = new Date(now.getTime() - (dayOfWeek * 24 * 60 * 60 * 1000));
+        startTime.setHours(0, 0, 0, 0);
+        endTime = new Date(startTime.getTime() + (7 * 24 * 60 * 60 * 1000));
+      } else if (policy.timeWindow === 'monthly') {
+        startTime = new Date(now.getFullYear(), now.getMonth(), 1);
+        endTime = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      } else {
+        // MESSY: Just skip unknown time windows
+        continue;
+      }
+
+      // Count actions in this time window
+      const actionsInWindow = await prisma.actionHistory.findMany({
         where: {
           userId: data.userId,
           actionType: data.action,
           timestamp: {
-            gte: startOfDay,
-            lt: endOfDay
+            gte: startTime,
+            lt: endTime
           }
         }
       });
 
-      const totalToday = todaysActions.reduce((sum, action) => sum + action.amount, 0);
-      const remaining = policy.limitAmount - totalToday;
+      const totalInWindow = actionsInWindow.reduce((sum, action) => sum + action.amount, 0);
+      const remaining = policy.limitAmount - totalInWindow;
 
-      if (totalToday + data.amount > policy.limitAmount) {
+      if (totalInWindow + data.amount > policy.limitAmount) {
         return res.json({
           allowed: false,
-          reason: 'Daily limit exceeded',
+          reason: `${policy.timeWindow.charAt(0).toUpperCase() + policy.timeWindow.slice(1)} limit exceeded`,
           policy: policy.name,
-          used: totalToday,
+          used: totalInWindow,
           limit: policy.limitAmount,
-          requested: data.amount
+          requested: data.amount,
+          window: policy.timeWindow,
+          windowStart: startTime.toISOString(),
+          windowEnd: endTime.toISOString()
         });
       }
     }
