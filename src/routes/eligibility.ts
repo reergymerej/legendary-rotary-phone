@@ -45,6 +45,10 @@ eligibilityRouter.post('/check', async (req, res) => {
     }
 
     // Check each policy (MESSY: should aggregate, not loop)
+    // EVEN MESSIER: Now we need to handle multiple policies for same action
+    let mostRestrictivePolicy = null;
+    let mostRestrictiveViolation = null;
+
     for (const policy of policies) {
       // MESSY: Inline time window calculation, repeated logic
       let startTime: Date, endTime: Date;
@@ -81,30 +85,43 @@ eligibilityRouter.post('/check', async (req, res) => {
       });
 
       const totalInWindow = actionsInWindow.reduce((sum, action) => sum + action.amount, 0);
-      const remaining = policy.limitAmount - totalInWindow;
 
       if (totalInWindow + data.amount > policy.limitAmount) {
-        return res.json({
-          allowed: false,
-          reason: `${policy.timeWindow.charAt(0).toUpperCase() + policy.timeWindow.slice(1)} limit exceeded`,
-          policy: policy.name,
-          used: totalInWindow,
-          limit: policy.limitAmount,
-          requested: data.amount,
-          window: policy.timeWindow,
-          windowStart: startTime.toISOString(),
-          windowEnd: endTime.toISOString()
-        });
+        // MESSY: Basic "most restrictive" logic - just pick the first violation
+        if (!mostRestrictiveViolation) {
+          mostRestrictivePolicy = policy;
+          mostRestrictiveViolation = {
+            used: totalInWindow,
+            limit: policy.limitAmount,
+            windowStart: startTime,
+            windowEnd: endTime
+          };
+        }
       }
     }
 
-    res.json({
+    // If any policy was violated, deny the request
+    if (mostRestrictiveViolation && mostRestrictivePolicy) {
+      return res.json({
+        allowed: false,
+        reason: `${mostRestrictivePolicy.timeWindow.charAt(0).toUpperCase() + mostRestrictivePolicy.timeWindow.slice(1)} limit exceeded`,
+        policy: mostRestrictivePolicy.name,
+        used: mostRestrictiveViolation.used,
+        limit: mostRestrictiveViolation.limit,
+        requested: data.amount,
+        window: mostRestrictivePolicy.timeWindow,
+        windowStart: mostRestrictiveViolation.windowStart.toISOString(),
+        windowEnd: mostRestrictiveViolation.windowEnd.toISOString()
+      });
+    }
+
+    return res.json({
       allowed: true,
       message: 'Action allowed'
     });
   } catch (error) {
     console.error('Error checking eligibility:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -116,15 +133,21 @@ eligibilityRouter.post('/record', async (req, res) => {
     // MESSY: Direct timestamp parsing, no validation, mixed concerns
     const timestamp = data.timestamp ? new Date(data.timestamp) : new Date();
 
-    // Create user if doesn't exist (MESSY: should be separate service)
-    await prisma.user.upsert({
-      where: { email: data.userId }, // HACK: using email field for userId
-      update: {},
-      create: {
-        email: data.userId,
-        id: data.userId
-      }
+    // MESSY: User management mixed in with action recording
+    let user = await prisma.user.findUnique({
+      where: { id: data.userId }
     });
+
+    if (!user) {
+      // MESSY: Auto-create user with minimal data, no validation
+      user = await prisma.user.create({
+        data: {
+          id: data.userId,
+          email: `${data.userId}@example.com`, // HACK: generate fake email
+          status: 'active'
+        }
+      });
+    }
 
     // Record the action
     const action = await prisma.actionHistory.create({
@@ -140,6 +163,7 @@ eligibilityRouter.post('/record', async (req, res) => {
       recorded: true,
       actionId: action.id,
       timestamp: action.timestamp.toISOString(),
+      userId: user.id
     });
   } catch (error) {
     console.error('Error recording action:', error);
