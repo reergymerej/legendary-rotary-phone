@@ -1,0 +1,54 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  status    String   @default("active")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  actions ActionHistory[]
+
+  @@map("users")
+}
+
+model Policy {
+  id          String   @id @default(cuid())
+  name        String
+  actionType  String
+  limitAmount Int
+  timeWindow  String   // "daily", "hourly", "monthly"
+  rulesJson   Json?    // Additional policy rules
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  actions ActionHistory[]
+
+  @@map("policies")
+}
+
+model ActionHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  actionType String
+  amount    Int      @default(1)
+  timestamp DateTime @default(now())
+  policyId  String?
+  metadata  Json?
+
+  user   User    @relation(fields: [userId], references: [id])
+  policy Policy? @relation(fields: [policyId], references: [id])
+
+  @@map("action_history")
+}

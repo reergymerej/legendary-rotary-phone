@@ -1,0 +1,42 @@
+.PHONY: help install dev test build clean docker-up docker-down
+
+help: ## Show this help message
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+install: ## Install dependencies
+	npm install
+
+dev: ## Start development server
+	npm run dev
+
+test: ## Run unit tests
+	npm test
+
+test-e2e: ## Run e2e tests
+	npm run test:e2e
+
+build: ## Build the project
+	npm run build
+
+clean: ## Clean build artifacts
+	rm -rf dist/ coverage/
+
+docker-up: ## Start database containers
+	docker compose up -d
+
+docker-down: ## Stop database containers
+	docker compose down
+
+db-migrate: ## Run database migrations
+	npm run db:migrate
+
+db-studio: ## Open Prisma Studio
+	npm run db:studio
+
+setup: install docker-up db-migrate ## Full development setup
+
+reset-db: ## Reset database (dangerous!)
+	docker compose down -v
+	docker compose up -d
+	sleep 5
+	npm run db:migrate
