@@ -1,5 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 export const policyRouter = Router();
 
@@ -13,13 +16,26 @@ const createPolicySchema = z.object({
 
 // List all policies
 policyRouter.get('/', async (req, res) => {
-  // TODO: Implement policy listing
-  // This is intentionally stub/messy for demonstration
+  try {
+    const policies = await prisma.policy.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'desc' }
+    });
 
-  res.json({
-    policies: [],
-    message: 'Policy listing not yet implemented',
-  });
+    res.json({
+      policies: policies.map(p => ({
+        id: p.id,
+        name: p.name,
+        action: p.actionType,
+        limit: p.limitAmount,
+        window: p.timeWindow,
+        createdAt: p.createdAt.toISOString()
+      }))
+    });
+  } catch (error) {
+    console.error('Error listing policies:', error);
+    res.status(500).json({ error: 'Failed to list policies' });
+  }
 });
 
 // Create new policy
@@ -27,17 +43,28 @@ policyRouter.post('/', async (req, res) => {
   try {
     const data = createPolicySchema.parse(req.body);
 
-    // TODO: Implement policy creation logic
-    // This is intentionally stub/messy for demonstration
+    // MESSY: No duplicate checking, no validation of business rules
+    const policy = await prisma.policy.create({
+      data: {
+        name: data.name,
+        actionType: data.action,
+        limitAmount: data.limit,
+        timeWindow: data.window,
+        rulesJson: data.rules || {}
+      }
+    });
 
     res.status(201).json({
-      id: 'policy_' + Math.random().toString(36).substr(2, 9),
-      ...data,
-      createdAt: new Date().toISOString(),
-      message: 'Policy creation not yet implemented',
+      id: policy.id,
+      name: policy.name,
+      action: policy.actionType,
+      limit: policy.limitAmount,
+      window: policy.timeWindow,
+      createdAt: policy.createdAt.toISOString()
     });
   } catch (error) {
-    res.status(400).json({ error: 'Invalid policy data' });
+    console.error('Error creating policy:', error);
+    res.status(500).json({ error: 'Failed to create policy' });
   }
 });
 
@@ -45,11 +72,27 @@ policyRouter.post('/', async (req, res) => {
 policyRouter.get('/:id', async (req, res) => {
   const { id } = req.params;
 
-  // TODO: Implement policy retrieval
-  // This is intentionally stub/messy for demonstration
+  try {
+    const policy = await prisma.policy.findUnique({
+      where: { id }
+    });
 
-  res.json({
-    id,
-    message: 'Policy retrieval not yet implemented',
-  });
+    if (!policy) {
+      return res.status(404).json({ error: 'Policy not found' });
+    }
+
+    res.json({
+      id: policy.id,
+      name: policy.name,
+      action: policy.actionType,
+      limit: policy.limitAmount,
+      window: policy.timeWindow,
+      rules: policy.rulesJson,
+      isActive: policy.isActive,
+      createdAt: policy.createdAt.toISOString()
+    });
+  } catch (error) {
+    console.error('Error fetching policy:', error);
+    res.status(500).json({ error: 'Failed to fetch policy' });
+  }
 });
