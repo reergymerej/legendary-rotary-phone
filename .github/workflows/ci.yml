@@ -41,7 +41,7 @@ jobs:
 
       - name: Setup database
         run: |
-          npx prisma migrate deploy
+          npx prisma db push --force-reset
           npx prisma generate
 
       - name: Run tests
