@@ -1,6 +1,8 @@
 # Eligibility Engine
 
+[![CI](https://github.com/reergymerej/legendary-rotary-phone/workflows/CI/badge.svg)](https://github.com/reergymerej/legendary-rotary-phone/actions)
 [![codecov](https://codecov.io/github/reergymerej/legendary-rotary-phone/graph/badge.svg?token=MVVLAMZJYH)](https://codecov.io/github/reergymerej/legendary-rotary-phone)
+[![Lint](https://github.com/reergymerej/legendary-rotary-phone/workflows/Lint/badge.svg)](https://github.com/reergymerej/legendary-rotary-phone/actions)
 
 A small TypeScript service that determines whether an action is allowed right now, based on historical records, time windows, and policy rules stored in a database.
 
