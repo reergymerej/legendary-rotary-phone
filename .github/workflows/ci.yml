@@ -37,6 +37,10 @@ jobs:
 
       - run: npm ci
 
+      - name: Lint code
+        run: npm run lint
+        continue-on-error: true
+
       - run: npm run build
 
       - name: Setup database
