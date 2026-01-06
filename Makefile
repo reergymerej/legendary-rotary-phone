@@ -1,4 +1,4 @@
-.PHONY: help install dev test build clean docker-up docker-down
+.PHONY: help install dev test build clean docker-up docker-down lint lint-fix
 
 help: ## Show this help message
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-20s\033[0m %s\n", $$1, $$2}'
@@ -14,6 +14,12 @@ test: ## Run unit tests
 
 test-e2e: ## Run e2e tests
 	npm run test:e2e
+
+lint: ## Run linter
+	npm run lint
+
+lint-fix: ## Run linter with auto-fix
+	npm run lint:fix
 
 build: ## Build the project
 	npm run build
