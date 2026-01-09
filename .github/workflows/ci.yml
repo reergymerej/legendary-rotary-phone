@@ -45,7 +45,7 @@ jobs:
           npx prisma generate
 
       - name: Run tests with coverage
-        run: npm test -- --coverage
+        run: make test-coverage
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
