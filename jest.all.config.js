@@ -6,13 +6,12 @@ module.exports = {
     '**/__tests__/**/*.test.ts',
     '**/?(*.)+(spec|test).ts'
   ],
-  testPathIgnorePatterns: [
-    '<rootDir>/__tests__/integration/'
-  ],
-  setupFiles: ['<rootDir>/jest.setup.js'],
   transform: {
     '^.+\\.ts$': 'ts-jest'
   },
+  setupFiles: ['<rootDir>/jest.setup.js'],
+  setupFilesAfterEnv: ['<rootDir>/__tests__/integration/setup.ts'],
+  testTimeout: 30000,
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',

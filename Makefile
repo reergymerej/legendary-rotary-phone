@@ -9,11 +9,17 @@ install: ## Install dependencies
 dev: ## Start development server
 	npm run dev
 
-test: ## Run unit tests
+test-unit: ## Run unit tests
 	npm test
 
-test-e2e: ## Run e2e tests
-	npm run test:e2e
+test: ## Run all tests (unit + integration)
+	npm run test:all
+
+test-coverage: ## Run all tests with coverage report
+	npm run test:all -- --coverage
+
+test-integration: ## Run integration tests
+	npm run test:integration
 
 lint: ## Run linter
 	npm run lint
