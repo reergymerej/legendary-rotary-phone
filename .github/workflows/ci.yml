@@ -32,12 +32,12 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - run: make install
+      - run: npm ci
 
       - run: make build
 
       - name: Setup database
-        run: make db-migrate
+        run: make db-migrate-test
 
       - name: Run tests with coverage
         run: make test-coverage
