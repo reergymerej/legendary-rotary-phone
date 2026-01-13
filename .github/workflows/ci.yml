@@ -32,17 +32,15 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - run: npm ci
+      - run: make install
 
-      - run: npm run build
+      - run: make build
 
       - name: Setup database
-        run: |
-          npx dotenv -e .env.ci -- prisma db push --force-reset
-          npx dotenv -e .env.ci -- prisma generate
+        run: make db-migrate
 
       - name: Run tests with coverage
-        run: npx dotenv -e .env.ci -- npm run test:all -- --coverage
+        run: make test-coverage
         continue-on-error: true
 
       - name: Upload coverage reports to Codecov
