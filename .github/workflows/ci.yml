@@ -14,15 +14,16 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
+          POSTGRES_USER: eligibility
+          POSTGRES_PASSWORD: dev_password
+          POSTGRES_DB: eligibility_db
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5432:5432
+          - 5436:5432
 
     steps:
       - uses: actions/checkout@v4
@@ -34,15 +35,13 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run build
+      - run: make build
 
       - name: Setup database
-        run: |
-          npx dotenv -e .env.ci -- prisma db push --force-reset
-          npx dotenv -e .env.ci -- prisma generate
+        run: make db-migrate-test
 
       - name: Run tests with coverage
-        run: npx dotenv -e .env.ci -- npm run test:all -- --coverage
+        run: make test-coverage
         continue-on-error: true
 
       - name: Upload coverage reports to Codecov

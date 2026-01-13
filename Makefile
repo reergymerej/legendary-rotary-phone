@@ -12,13 +12,13 @@ dev: ## Start development server
 test-unit: ## Run unit tests
 	npm test
 
-test: db-migrate db-migrate-test ## Run all tests (unit + integration)
+test: db-migrate-test ## Run all tests (unit + integration)
 	npm run test:all
 
-test-coverage: db-migrate db-migrate-test ## Run all tests with coverage report
+test-coverage: db-migrate-test ## Run all tests with coverage report
 	npm run test:all -- --coverage
 
-test-integration: db-migrate db-migrate-test ## Run integration tests
+test-integration: db-migrate-test ## Run integration tests
 	npm run test:integration
 
 lint: ## Run linter
