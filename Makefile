@@ -12,13 +12,13 @@ dev: ## Start development server
 test-unit: ## Run unit tests
 	npm test
 
-test: ## Run all tests (unit + integration)
+test: db-migrate db-migrate-test ## Run all tests (unit + integration)
 	npm run test:all
 
-test-coverage: ## Run all tests with coverage report
+test-coverage: db-migrate db-migrate-test ## Run all tests with coverage report
 	npm run test:all -- --coverage
 
-test-integration: ## Run integration tests
+test-integration: db-migrate db-migrate-test ## Run integration tests
 	npm run test:integration
 
 lint: ## Run linter
@@ -41,6 +41,9 @@ docker-down: ## Stop database containers
 
 db-migrate: ## Run database migrations
 	npm run db:migrate
+
+db-migrate-test: ## Run database migrations for test database
+	npm run db:migrate:test
 
 db-studio: ## Open Prisma Studio
 	npm run db:studio

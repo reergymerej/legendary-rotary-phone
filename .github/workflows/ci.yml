@@ -10,9 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/testdb
-
     services:
       postgres:
         image: postgres:15
@@ -41,11 +38,11 @@ jobs:
 
       - name: Setup database
         run: |
-          npx prisma db push --force-reset
-          npx prisma generate
+          npx dotenv -e .env.ci -- prisma db push --force-reset
+          npx dotenv -e .env.ci -- prisma generate
 
       - name: Run tests with coverage
-        run: make test-coverage
+        run: npx dotenv -e .env.ci -- npm run test:all -- --coverage
         continue-on-error: true
 
       - name: Upload coverage reports to Codecov

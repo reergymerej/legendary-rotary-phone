@@ -3,16 +3,16 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: eligibility
-      POSTGRES_PASSWORD: dev_password
-      POSTGRES_DB: eligibility_db
+      POSTGRES_USER: ${DB_USER:-eligibility}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-dev_password}
+      POSTGRES_DB: ${DB_NAME:-eligibility_db}
       POSTGRES_HOST_AUTH_METHOD: md5
     ports:
-      - "5435:5432"
+      - "${DB_PORT:-5435}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U eligibility"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-eligibility}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -20,12 +20,12 @@ services:
   postgres_test:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: eligibility
-      POSTGRES_PASSWORD: test_password
-      POSTGRES_DB: eligibility_test_db
+      POSTGRES_USER: ${TEST_DB_USER:-eligibility}
+      POSTGRES_PASSWORD: ${TEST_DB_PASSWORD:-test_password}
+      POSTGRES_DB: ${TEST_DB_NAME:-eligibility_test_db}
       POSTGRES_HOST_AUTH_METHOD: md5
     ports:
-      - "5436:5432"
+      - "${TEST_DB_PORT:-5436}:5432"
     tmpfs:
       - /var/lib/postgresql/data
     healthcheck:
