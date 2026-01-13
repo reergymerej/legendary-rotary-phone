@@ -10,19 +10,27 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      # must match .env.test
+      DB_USER: eligibility
+      DB_PASSWORD: dev_password
+      DB_NAME: eligibility_db
+      DB_PORT: 5436
+
     services:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: testdb
+          POSTGRES_USER: ${{ env.DB_USER }}
+          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
+          POSTGRES_DB: ${{ env.DB_NAME }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5436:5432
+          - ${{ env.DB_PORT }}:5432
 
     steps:
       - uses: actions/checkout@v4
