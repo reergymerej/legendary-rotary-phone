@@ -43,7 +43,7 @@ db-migrate: ## Run database migrations
 	npm run db:migrate
 
 db-migrate-test: ## Run database migrations for test database
-	@set -a && source .env && DATABASE_URL="$$TEST_DATABASE_URL" npx prisma migrate deploy
+	npm run db:migrate:test
 
 db-studio: ## Open Prisma Studio
 	npm run db:studio
