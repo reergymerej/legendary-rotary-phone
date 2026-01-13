@@ -14,25 +14,18 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: ${{ env.DB_USER }}
-          POSTGRES_PASSWORD: ${{ env.DB_PASSWORD }}
-          POSTGRES_DB: ${{ env.DB_NAME }}
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: testdb
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
-          - ${{ env.DB_PORT }}:5432
+          - 5436:5432
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Load environment variables from .env.test
-        uses: xom9ikk/dotenv@v2
-        with:
-          path: .
-          file: .env.test
 
       - uses: actions/setup-node@v4
         with:
