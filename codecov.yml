@@ -14,7 +14,6 @@ parsers:
     enable_partials: false
 
 ignore:
-  - "src/index.ts"
   - "**/*.d.ts"
   - "test-results"
   - "coverage"
