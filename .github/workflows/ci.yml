@@ -42,6 +42,12 @@ jobs:
 
       - name: Run tests with coverage
         run: make test-coverage
+        env:
+          DB_USER: eligibility
+          DB_PASSWORD: test_password
+          DB_NAME: eligibility_test_db
+          DB_PORT: 5436
+          DATABASE_URL: postgresql://eligibility:test_password@localhost:5436/eligibility_test_db
         continue-on-error: true
 
       - name: Upload coverage reports to Codecov

@@ -39,7 +39,7 @@ Thumbs.db
 *~
 
 # Prisma
-prisma/migrations/
+# Note: migrations/ should be committed for production deployments
 
 # Local development
 PROGRESS.md
