@@ -1,4 +1,3 @@
-import { app } from './app';
 import { config } from './config';
 
 // Mock the app.listen method to avoid actually starting a server
