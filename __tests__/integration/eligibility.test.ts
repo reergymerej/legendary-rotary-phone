@@ -86,6 +86,34 @@ describe('Eligibility API E2E Tests', () => {
     });
   });
 
+  describe('GET /users/:id', () => {
+    it('should return user when found', async () => {
+      const userId = `get-user-${Date.now()}`;
+
+      // First create a user
+      await request(app)
+        .post('/users')
+        .send({ userId, email: 'gettest@example.com' });
+
+      // Then retrieve it
+      const response = await request(app).get(`/users/${userId}`);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toHaveProperty('id', userId);
+      expect(response.body).toHaveProperty('email', 'gettest@example.com');
+      expect(response.body).toHaveProperty('status', 'active');
+    });
+
+    it('should return 404 when user not found', async () => {
+      const nonExistentId = `nonexistent-${Date.now()}`;
+
+      const response = await request(app).get(`/users/${nonExistentId}`);
+
+      expect(response.status).toBe(404);
+      expect(response.body).toHaveProperty('error', 'User not found');
+    });
+  });
+
   describe('Health check', () => {
     it('should return health status', async () => {
       const response = await request(app).get('/health');
