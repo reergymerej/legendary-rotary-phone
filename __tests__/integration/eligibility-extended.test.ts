@@ -20,8 +20,7 @@ describe('Additional Eligibility API Tests', () => {
         });
 
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
-      expect(response.body).toHaveProperty('recorded');
+      expect(response.body).toHaveProperty('recorded', true);
     });
 
     it('should create user automatically when recording action for non-existent user', async () => {
@@ -36,7 +35,7 @@ describe('Additional Eligibility API Tests', () => {
         });
 
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('recorded', true);
     });
 
     it('should handle custom timestamp when recording action', async () => {
@@ -53,7 +52,7 @@ describe('Additional Eligibility API Tests', () => {
         });
 
       expect(response.status).toBe(200);
-      expect(response.body).toHaveProperty('success', true);
+      expect(response.body).toHaveProperty('recorded', true);
     });
 
     it('should return 400 for invalid record data', async () => {

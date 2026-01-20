@@ -54,7 +54,7 @@ policyRouter.post('/', async (req, res) => {
       }
     });
 
-    res.status(201).json({
+    return res.status(201).json({
       id: policy.id,
       name: policy.name,
       action: policy.actionType,
@@ -62,9 +62,12 @@ policyRouter.post('/', async (req, res) => {
       window: policy.timeWindow,
       createdAt: policy.createdAt.toISOString()
     });
-  } catch (error) {
+  } catch (error: any) {
+    if (error && typeof error === 'object' && 'issues' in error) {
+      return res.status(400).json({ error: 'Invalid policy data', details: error.issues });
+    }
     console.error('Error creating policy:', error);
-    res.status(500).json({ error: 'Failed to create policy' });
+    return res.status(500).json({ error: 'Failed to create policy' });
   }
 });
 
